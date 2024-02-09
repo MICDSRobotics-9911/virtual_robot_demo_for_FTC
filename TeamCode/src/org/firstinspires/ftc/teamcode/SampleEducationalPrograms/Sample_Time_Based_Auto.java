@@ -39,8 +39,8 @@ public class Sample_Time_Based_Auto extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive() && !isStopRequested()) {
-            telemetry.addData("Current Heading: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
             for (int i = 0; i < 4; i++) {
+                telemetry.addData("Current Heading: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
                 backLeft.setPower(0.5);
                 frontLeft.setPower(0.5);
                 frontRight.setPower(0.5);
@@ -55,7 +55,6 @@ public class Sample_Time_Based_Auto extends LinearOpMode {
 
                 sleep(turnMilliseconds);
                 telemetry.update();
-
             }
             backLeft.setPower(0);
             frontLeft.setPower(0);

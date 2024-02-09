@@ -47,6 +47,7 @@ public class Sample_Encoder_Based_Auto extends OpMode {
             setPower(0.5);
             while (isBusy()) {
             }
+            telemetry.addData("Heading: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
 
             setRightTarget(2100);
             setLeftTarget(-2100);
@@ -55,6 +56,7 @@ public class Sample_Encoder_Based_Auto extends OpMode {
             setLeftPower(-0.5);
             while (isBusy()) {
             }
+            telemetry.update();
         }
     }
     @Override
