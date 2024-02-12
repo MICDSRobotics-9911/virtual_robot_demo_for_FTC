@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.SampleEducationalPrograms;
+package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;

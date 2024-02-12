@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.SampleEducationalPrograms;
+package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced;
 
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
