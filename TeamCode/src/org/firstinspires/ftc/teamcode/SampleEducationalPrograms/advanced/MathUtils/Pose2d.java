@@ -4,6 +4,12 @@ public class Pose2d {
 
     private double x, y, heading;
 
+    public Pose2d() {
+        this.x = 0;
+        this.y = 0;
+        this.heading = 0;
+    }
+
     public Pose2d(double x, double y, double heading) {
         this.x = x;
         this.y = y;
