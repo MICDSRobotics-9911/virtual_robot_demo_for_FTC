@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.SampleEducationalPrograms;
+package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name="Sample_Field_Centric_Mecanum_Drive_TeleOp")
+@TeleOp(name="Sample_Field_Centric_Mecanum_Drive_TeleOp", group="advanced")
 public class Sample_Field_Centric_Mecanum_Drive_TeleOp extends OpMode {
     DcMotor backLeft;
     DcMotor frontLeft;
@@ -40,6 +40,9 @@ public class Sample_Field_Centric_Mecanum_Drive_TeleOp extends OpMode {
 
     @Override
     public void loop() {
+        if (gamepad1.y) {
+            imu.resetYaw();
+        }
         double backLeftPower, frontLeftPower, frontRightPower, backRightPower;
         double x, y, turn, power, theta, botHeading;
         botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);

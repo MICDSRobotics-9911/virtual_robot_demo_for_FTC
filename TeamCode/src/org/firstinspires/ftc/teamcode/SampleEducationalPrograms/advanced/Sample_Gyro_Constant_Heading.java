@@ -11,7 +11,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.Drivetrain;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.PIDController;
 
-@TeleOp(name="Sample_Gyro_Constant_Heading")
+@TeleOp(name="Sample_Gyro_Constant_Heading", group="advanced")
 public class Sample_Gyro_Constant_Heading extends OpMode {
     public static double kP = 0.8;
     public static double kI = 0;

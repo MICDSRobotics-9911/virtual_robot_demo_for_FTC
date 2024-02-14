@@ -19,7 +19,6 @@ public class LocalizationTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
-
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         waitForStart();
@@ -34,11 +33,21 @@ public class LocalizationTest extends LinearOpMode {
             );
 
             drive.update();
+            drive.localizer.update();
 
+            org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Pose2d otherPoseEstimate = drive.localizer.getPoseEstimate();
             Pose2d poseEstimate = drive.getPoseEstimate();
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
             telemetry.addData("heading", poseEstimate.getHeading());
+
+            telemetry.addData("otherX: ", otherPoseEstimate.getX());
+            telemetry.addData("otherY: ", otherPoseEstimate.getY());
+            telemetry.addData("otherHeading: ", otherPoseEstimate.getHeading());
+
+            telemetry.addData("xError: ", poseEstimate.getX() - otherPoseEstimate.getX());
+            telemetry.addData("yError: ", poseEstimate.getY() - otherPoseEstimate.getY());
+            telemetry.addData("headingError: ", poseEstimate.getHeading() - otherPoseEstimate.getHeading());
             telemetry.update();
         }
     }

@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
-@TeleOp(name="RoadrunnerFieldCentric")
+@TeleOp(name="RoadrunnerFieldCentric", group="advanced")
 public class Roadrunner_Based_Field_Centric_Drive_TeleOp extends OpMode {
     SampleMecanumDrive drive;
     @Override
@@ -36,5 +36,6 @@ public class Roadrunner_Based_Field_Centric_Drive_TeleOp extends OpMode {
                         -gamepad1.right_stick_x
                 )
         );
+        telemetry.addData("Heading: ", drive.getRawExternalHeading());
     }
 }

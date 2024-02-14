@@ -21,8 +21,8 @@ public class DriveEncoderLocalizer {
     private final double LONGITUDINAL_MULTIPLIER = 1.0;
     private final double LATERAL_MULTIPLIER = 1.0;
     private final double WHEEL_RADIUS = 1.88976; // inches
-    private final double GEARBOX_RATIO = 1.0 / 16.0;
-    private final int TICKS_PER_REV = 28; // from motor spec sheet
+    private final double GEARBOX_RATIO = 1;
+    private final int TICKS_PER_REV = 1120; // from motor spec sheet
     private final IMU imu;
     private final ElapsedTime time;
 
@@ -51,6 +51,10 @@ public class DriveEncoderLocalizer {
     public void setStartPose(double x, double y, double headingDegs) {
         this.headingOffset = Math.toRadians(headingDegs);
         currentPoseEstimate = new Pose2d(x, y, Math.toRadians(headingDegs));
+    }
+
+    public void setStartPose(Pose2d pose) {
+        currentPoseEstimate = pose;
     }
 
     public Pose2d getPoseEstimate() {
@@ -120,5 +124,9 @@ public class DriveEncoderLocalizer {
             normalizedAngle += 2 * Math.PI;
         }
         return normalizedAngle;
+    }
+
+    public void reset() {
+        currentPoseEstimate = new Pose2d();
     }
 }

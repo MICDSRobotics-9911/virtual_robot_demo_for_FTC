@@ -29,6 +29,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.DriveEncoderLocalizer;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceRunner;
@@ -62,6 +63,7 @@ public class SampleMecanumDrive extends MecanumDrive {
     public static double VX_WEIGHT = 1;
     public static double VY_WEIGHT = 1;
     public static double OMEGA_WEIGHT = 1;
+    public DriveEncoderLocalizer localizer;
 
     private TrajectorySequenceRunner trajectorySequenceRunner;
 
@@ -98,11 +100,15 @@ public class SampleMecanumDrive extends MecanumDrive {
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 DriveConstants.LOGO_FACING_DIR, DriveConstants.USB_FACING_DIR));
         imu.initialize(parameters);
+        imu.resetYaw();
 
         leftFront = hardwareMap.get(DcMotorEx.class, "front_left_motor");
         leftRear = hardwareMap.get(DcMotorEx.class, "back_left_motor");
         rightRear = hardwareMap.get(DcMotorEx.class, "back_right_motor");
         rightFront = hardwareMap.get(DcMotorEx.class, "front_right_motor");
+        localizer = new DriveEncoderLocalizer(leftFront, rightFront, leftRear, rightRear, imu);
+        localizer.reset();
+        localizer.setStartPose(0, 0, 0);
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
