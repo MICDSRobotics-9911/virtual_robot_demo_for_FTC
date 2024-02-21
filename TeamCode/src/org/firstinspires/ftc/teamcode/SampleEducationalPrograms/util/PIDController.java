@@ -1,23 +1,74 @@
 package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util;
 
-public class PIDController extends PIDFController {
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+public class PIDController {
+
+    double Kp;
+    double Ki;
+    double Kd;
+    double lastError = 0;
+    double integral = 0;
+    boolean angleWrap = false;
+
+    ElapsedTime timer = new ElapsedTime();
 
     /**
-     * Default constructor with just the coefficients
+     * Set PID gains
+     * @param Kp proportional gain
+     * @param Ki integral gain
+     * @param Kd derivative gain
      */
-    public PIDController(double kp, double ki, double kd) {
-        super(kp, ki, kd, 0);
+    public PIDController(double Kp, double Ki, double Kd) {
+        this.Kp = Kp;
+        this.Ki = Ki;
+        this.Kd = Kd;
+    }
+
+    public PIDController(double Kp, double Ki, double Kd, boolean angleWrap) {
+        this.Kp = Kp;
+        this.Ki = Ki;
+        this.Kd = Kd;
+        this.angleWrap = angleWrap;
     }
 
     /**
-     * The extended constructor.
+     * calculate PID output given the reference and the current system state
+     * @param reference where we would like our system to be
+     * @param state where our system is
+     * @return the signal to send to our motor or other actuator
      */
-    public PIDController(double kp, double ki, double kd, double sp, double pv) {
-        super(kp, ki, kd, 0, sp, pv);
+    public double update(double reference, double state) {
+        double error;
+        double derivative;
+        // check if we need to unwrap angle
+        if (angleWrap) {
+            error = angleWrap(reference - state);
+        } else {
+            error = reference - state;
+        }
+        // forward euler integration
+        integral += error * timer.seconds();
+        derivative = (error - lastError) / timer.seconds();
+
+        double output = (error * Kp) + (integral * Ki) + (derivative * Kd);
+
+        timer.reset();
+        lastError = error;
+
+        return output;
     }
 
-    public void setPID(double kp, double ki, double kd) {
-        setPIDF(kp, ki, kd, 0);
+
+    public double angleWrap(double radians) {
+        while (radians > Math.PI) {
+            radians -= 2 * Math.PI;
+        }
+        while (radians < -Math.PI) {
+            radians += 2 * Math.PI;
+        }
+        return radians;
     }
+
 
 }

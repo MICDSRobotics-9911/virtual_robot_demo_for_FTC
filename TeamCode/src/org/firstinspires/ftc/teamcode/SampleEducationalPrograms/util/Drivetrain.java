@@ -1,7 +1,14 @@
 package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util;
 
+import static org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.RobotConstants.COUNTS_PER_INCH;
+
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 
 public class Drivetrain {
@@ -9,8 +16,12 @@ public class Drivetrain {
     public DcMotor backLeft;
     public DcMotor frontRight;
     public DcMotor backRight;
+    private PIDController gyroController;
+    private PIDController driveController;
+    private IMU imu;
+    private Telemetry telemetry;
 
-    public Drivetrain(HardwareMap hardwareMap) {
+    public Drivetrain(HardwareMap hardwareMap, Telemetry telemetry) {
 
         /**
          * Assigns the parent hardware map to local ArtemisHardwareMap class variable
@@ -53,40 +64,79 @@ public class Drivetrain {
          * Reverses shooter motor to shoot the correct way and same with the conveyor motor
          * **/
 
-        /**
-         * We are setting the motor 0 mode power to be brake as it actively stops the robot and doesn't rely on the surface to slow down once the robot power is set to 0
-         * **/
-        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-
+        imu = hardwareMap.get(IMU.class, "imu");
+        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
+        imu.resetYaw();
+        gyroController = new PIDController(3, 0, 0, true);
     }
 
-    public void turnAdjust(double output){
+    private void turnAdjust(double output){
         frontLeft.setPower(-output);
         backLeft.setPower(-output);
         frontRight.setPower(output);
         backRight.setPower(output);
     }
-    public void moveRobot(double leftStickY, double leftStickX, double rightStickX){
-        /**
-         * Wheel powers calculated using gamepad 1's inputs leftStickY, leftStickX, and rightStickX
-         * **/
-        double topLeftPower = leftStickY + leftStickX + rightStickX;
-        double bottomLeftPower = leftStickY - leftStickX + rightStickX;
-        double topRightPower = leftStickY - leftStickX - rightStickX;
-        double bottomRightPower = leftStickY + leftStickX - rightStickX;
 
-        /**
-         * Sets the wheel's power
-         * **/
-        frontLeft.setPower(topLeftPower);
-        frontRight.setPower(topRightPower);
-        backLeft.setPower(bottomLeftPower);
-        backRight.setPower(bottomRightPower);
+
+
+    public void encoderDrive(double speed, double leftFrontInches,
+                             double rightFrontInches, double leftBackInches, double rightBackInches) {
+        int newLFTarget;
+        int newRFTarget;
+        int newLBTarget;
+        int newRBTarget;
+
+        newLFTarget = frontLeft.getCurrentPosition() + (int) (leftFrontInches * COUNTS_PER_INCH);
+        newRFTarget = frontRight.getCurrentPosition() + (int) (rightFrontInches * COUNTS_PER_INCH);
+        newLBTarget = backLeft.getCurrentPosition() + (int) (leftBackInches * COUNTS_PER_INCH);
+        newRBTarget = backRight.getCurrentPosition() + (int) (rightBackInches * COUNTS_PER_INCH);
+
+        setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        setPower(Math.abs(speed));
+
+        while (isBusy()) {
+            holdHeading();
+            telemetry.addData("frontLeftPos: ", frontLeft.getCurrentPosition());
+            telemetry.addData("frontRightPos: ", frontRight.getCurrentPosition());
+            telemetry.addData("backLeftPos: ", backLeft.getCurrentPosition());
+            telemetry.addData("backRightPos: ", backRight.getCurrentPosition());
+            telemetry.update();
+        }
+        setPower(0);
+        setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
     }
+
+    public void moveForward(double speed, double inches) {
+        encoderDrive(speed, inches, inches, inches, inches);
+    }
+
+    public void moveBackward(double speed, double inches) {
+        moveForward(speed, -inches);
+    }
+
+    public void strafeLeft(double speed, double inches) {
+        encoderDrive(speed, -inches, inches, inches, -inches);
+    }
+
+    public void strafeRight(double speed, double inches) {
+        encoderDrive(speed, inches, -inches, -inches, inches);
+    }
+
+    public void turnTo(double referenceAngle) {
+        double power = gyroController.update(Math.toRadians(referenceAngle),
+                imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+        turnAdjust(power);
+        telemetry.addData("Target Angle:  ", referenceAngle);
+        telemetry.addData("Current IMU Angle", getHeading());
+        telemetry.addData("Error: ", referenceAngle - getHeading());
+    }
+
+    public void holdHeading() {
+        turnTo(getHeading());
+    }
+
 
     public void setMode(DcMotor.RunMode mode) {
         frontRight.setMode(mode);
@@ -127,5 +177,9 @@ public class Drivetrain {
 
     public boolean isBusy() {
         return frontRight.isBusy() && frontLeft.isBusy() && backLeft.isBusy() && backRight.isBusy();
+    }
+
+    public  double getHeading() {
+        return imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
     }
 }

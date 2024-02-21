@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced;
+package org.firstinspires.ftc.teamcode.SampleEducationalPrograms;
 
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.PIDControll
 
 @TeleOp(name="Sample_Gyro_Constant_Heading", group="advanced")
 public class Sample_Gyro_Constant_Heading extends OpMode {
-    public static double kP = 0.8;
+    public static double kP = 3;
     public static double kI = 0;
     public static double kD = 0;
     private Drivetrain drive;
@@ -22,53 +22,39 @@ public class Sample_Gyro_Constant_Heading extends OpMode {
     private double referenceAngle;
     @Override
     public void init() {
-        drive = new Drivetrain(hardwareMap);
+        drive = new Drivetrain(hardwareMap, telemetry);
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
-        gyroController = new PIDController(kP, kI, kD);
+        gyroController = new PIDController(kP, kI, kD, true);
         referenceAngle = Math.toRadians(180);
     }
 
     @Override
     public void init_loop() {
-        telemetry.addData("Robot Heading: ", getHeading());
+        imu.resetYaw();
+        telemetry.addData("Robot Heading: ", drive.getHeading());
     }
 
     public void start() {
         telemetry.addData("Target IMU Angle: ", 180);
-        telemetry.addData("Current IMU Angle", getHeading());
-        imu.resetYaw();
+        telemetry.addData("Current IMU Angle", drive.getHeading());
         drive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         drive.setTargetPosition(2000);
         drive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         drive.setPower(0.5);
         while (drive.isBusy()) {
+            telemetry.update();
         }
-        telemetry.update();
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        double power = gyroController.calculate(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS), Math.toRadians((getHeading() + 90)) % 360);
-        telemetry.addData("New Target: ", (getHeading() + 90) % 360);
-        telemetry.addData("Current IMU Angle", getHeading());
-        drive.turnAdjust(power);
-        telemetry.update();
     }
 
     @Override
     public void loop() {
-        /*telemetry.addData("Target IMU Angle: ", 180);
-        telemetry.addData("Current IMU Angle", getHeading());
-        telemetry.addData("Error: ", gyroController.getPositionError());
-        double power = gyroController.calculate(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS), referenceAngle);
-        drive.turnAdjust(power);
-        telemetry.update();*/
+        double referenceAngle = 180;
+        drive.turnTo(180);
+        drive.holdHeading();
+        telemetry.update();
     }
-
-    private double getHeading() {
-        return imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-    }
-
-
-
 
 }
