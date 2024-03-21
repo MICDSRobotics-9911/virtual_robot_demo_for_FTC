@@ -8,7 +8,7 @@ public class PIDController {
     double Ki;
     double Kd;
     double lastError = 0;
-    double integral = 0;
+    double integralSum = 0;
     boolean angleWrap = false;
 
     ElapsedTime timer = new ElapsedTime();
@@ -48,10 +48,10 @@ public class PIDController {
             error = reference - state;
         }
         // forward euler integration
-        integral += error * timer.seconds();
+        integralSum += error * timer.seconds();
         derivative = (error - lastError) / timer.seconds();
 
-        double output = (error * Kp) + (integral * Ki) + (derivative * Kd);
+        double output = (error * Kp) + (integralSum * Ki) + (derivative * Kd);
 
         timer.reset();
         lastError = error;

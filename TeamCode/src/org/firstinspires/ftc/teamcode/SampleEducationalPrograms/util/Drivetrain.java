@@ -17,7 +17,6 @@ public class Drivetrain {
     public DcMotor frontRight;
     public DcMotor backRight;
     private PIDController gyroController;
-    private PIDController driveController;
     private IMU imu;
     private Telemetry telemetry;
 
@@ -46,10 +45,8 @@ public class Drivetrain {
         /**
          * Allow the 4 wheel motors to be run without encoders since we are doing a time based autonomous
          * **/
-        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         /**
          *Since we are putting the motors on different sides we need to reverse direction so that one wheel doesn't pull us backwards
@@ -68,7 +65,8 @@ public class Drivetrain {
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
         imu.resetYaw();
-        gyroController = new PIDController(3, 0, 0, true);
+        gyroController = new PIDController(5, 0, 2.5, true);
+        this.telemetry = telemetry;
     }
 
     private void turnAdjust(double output){
@@ -82,6 +80,7 @@ public class Drivetrain {
 
     public void encoderDrive(double speed, double leftFrontInches,
                              double rightFrontInches, double leftBackInches, double rightBackInches) {
+        setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         int newLFTarget;
         int newRFTarget;
         int newLBTarget;
@@ -92,6 +91,10 @@ public class Drivetrain {
         newLBTarget = backLeft.getCurrentPosition() + (int) (leftBackInches * COUNTS_PER_INCH);
         newRBTarget = backRight.getCurrentPosition() + (int) (rightBackInches * COUNTS_PER_INCH);
 
+        frontLeft.setTargetPosition(newLFTarget);
+        frontRight.setTargetPosition(newRFTarget);
+        backLeft.setTargetPosition(newLBTarget);
+        backRight.setTargetPosition(newRBTarget);
         setMode(DcMotor.RunMode.RUN_TO_POSITION);
         setPower(Math.abs(speed));
 
@@ -124,17 +127,20 @@ public class Drivetrain {
         encoderDrive(speed, inches, -inches, -inches, inches);
     }
 
-    public void turnTo(double referenceAngle) {
-        double power = gyroController.update(Math.toRadians(referenceAngle),
-                imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
-        turnAdjust(power);
-        telemetry.addData("Target Angle:  ", referenceAngle);
+    public void turnTo(double radians) {
+        telemetry.addData("Target Angle:  ", Math.toDegrees(radians));
         telemetry.addData("Current IMU Angle", getHeading());
-        telemetry.addData("Error: ", referenceAngle - getHeading());
+        telemetry.addData("Error: ", Math.toDegrees(radians) - getHeading());
+        while (Math.abs(Math.toDegrees(radians) - getHeading()) > 1.5) {
+            double power = gyroController.update(Math.toRadians(radians),
+                    imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+            turnAdjust(power);
+            telemetry.update();
+        }
     }
 
     public void holdHeading() {
-        turnTo(getHeading());
+        turnTo(Math.toRadians(getHeading()));
     }
 
 

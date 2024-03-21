@@ -127,6 +127,6 @@ public class DriveEncoderLocalizer {
     }
 
     public void reset() {
-        currentPoseEstimate = new Pose2d();
+        currentPoseEstimate = new Pose2d(0, 0, 0);
     }
 }

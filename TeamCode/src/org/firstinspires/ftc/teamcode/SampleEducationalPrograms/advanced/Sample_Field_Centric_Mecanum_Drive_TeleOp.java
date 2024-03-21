@@ -54,23 +54,24 @@ public class Sample_Field_Centric_Mecanum_Drive_TeleOp extends OpMode {
         turn = gamepad1.right_stick_x;
         double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
         double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+        rotX = rotX * 1.1;
         double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(turn), 1);
-        power = Math.hypot(rotX, rotY);
+        /*(power = Math.hypot(rotX, rotY);
         theta = Math.atan2(rotY, rotX);
         double sin = Math.sin(theta - Math.PI / 4);
         double cos = Math.cos(theta - Math.PI / 4);
-        double max = Math.max(Math.abs(sin), Math.abs(cos));
-        backLeftPower = power * sin / max + turn;
-        backRightPower = power * cos / max - turn;
-        frontLeftPower = power * cos / max + turn;
-        frontRightPower = power * sin / max - turn;
+        double max = Math.max(Math.abs(sin), Math.abs(cos));*/
+        frontLeftPower = (rotY + rotX + turn) / denominator;
+        backLeftPower = (rotY - rotX + turn) / denominator;
+        frontRightPower = (rotY - rotX - turn) / denominator;
+        backRightPower = (rotY + rotX - turn) / denominator;
 
-        if ((power + Math.abs(turn)) > 1) {
+        /*if ((power + Math.abs(turn)) > 1) {
             frontLeftPower /= power + Math.abs(turn);
             frontRightPower /= power + Math.abs(turn);
             backLeftPower /= power + Math.abs(turn);
             backRightPower /= power + Math.abs(turn);
-        }
+        }*/
 
         backLeft.setPower(backLeftPower);
         backRight.setPower(backRightPower);
