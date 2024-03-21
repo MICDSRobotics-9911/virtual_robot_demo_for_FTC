@@ -3,20 +3,28 @@ package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util;
 import static org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.RobotConstants.COUNTS_PER_INCH;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 
 public class Drivetrain {
+    private double integralSum = 0;
+    public static double kP = 5;
+    public static double kI = 0;
+    public static double kD = 2.5;
+
+    private ElapsedTime timer = new ElapsedTime();
+    private double lastError = 0;
     public DcMotor frontLeft;
     public DcMotor backLeft;
     public DcMotor frontRight;
     public DcMotor backRight;
-    private PIDController gyroController;
     private IMU imu;
     private Telemetry telemetry;
 
@@ -65,7 +73,6 @@ public class Drivetrain {
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
         imu.resetYaw();
-        gyroController = new PIDController(5, 0, 2.5, true);
         this.telemetry = telemetry;
     }
 
@@ -97,9 +104,13 @@ public class Drivetrain {
         backRight.setTargetPosition(newRBTarget);
         setMode(DcMotor.RunMode.RUN_TO_POSITION);
         setPower(Math.abs(speed));
-
+        double targetAngle = Math.toRadians(getHeading());
         while (isBusy()) {
-            holdHeading();
+            /*if (Math.abs(Math.toRadians(targetAngle) - Math.toRadians(getHeading())) > Math.toRadians(0.5)) {
+                holdHeading(targetAngle);
+            } else {
+                setPower(Math.abs(speed));
+            }*/
             telemetry.addData("frontLeftPos: ", frontLeft.getCurrentPosition());
             telemetry.addData("frontRightPos: ", frontRight.getCurrentPosition());
             telemetry.addData("backLeftPos: ", backLeft.getCurrentPosition());
@@ -128,19 +139,26 @@ public class Drivetrain {
     }
 
     public void turnTo(double radians) {
-        telemetry.addData("Target Angle:  ", Math.toDegrees(radians));
-        telemetry.addData("Current IMU Angle", getHeading());
-        telemetry.addData("Error: ", Math.toDegrees(radians) - getHeading());
-        while (Math.abs(Math.toDegrees(radians) - getHeading()) > 1.5) {
-            double power = gyroController.update(Math.toRadians(radians),
-                    imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+        double currentAngle = Math.toRadians(getHeading());
+        double error = radians - currentAngle;
+        while (Math.abs(error) > Math.toRadians(0.05)) {
+            currentAngle = Math.toRadians(getHeading());
+            double power = PIDControl(radians, currentAngle);
             turnAdjust(power);
+            error = radians - currentAngle;
+            telemetry.addData("Target Angle:  ", Math.toDegrees(radians));
+            telemetry.addData("Current IMU Angle", getHeading());
+            telemetry.addData("Error: ", Math.toDegrees(error));
             telemetry.update();
         }
+        lastError = 0;
+        integralSum = 0;
+        timer.reset();
+        setPower(0);
     }
 
-    public void holdHeading() {
-        turnTo(Math.toRadians(getHeading()));
+    public void holdHeading(double targetHeading) {
+        turnTo(targetHeading);
     }
 
 
@@ -187,5 +205,28 @@ public class Drivetrain {
 
     public  double getHeading() {
         return imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+    }
+
+    public double PIDControl(double reference, double state) {
+        double error = angleWrap(reference - state);
+        integralSum += error * timer.seconds();
+        double derivative = (error - lastError) / timer.seconds();
+        lastError = error;
+
+        timer.reset();
+
+        double output = (error * kP) + (derivative * kD) + (integralSum * kI);
+        return output;
+    }
+
+    public double angleWrap(double radians) {
+        while (radians > Math.PI) {
+            radians -= 2 * Math.PI;
+        }
+
+        while (radians < -Math.PI) {
+            radians += 2 * Math.PI;
+        }
+        return radians;
     }
 }

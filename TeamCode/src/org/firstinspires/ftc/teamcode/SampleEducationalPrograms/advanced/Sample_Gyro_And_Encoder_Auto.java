@@ -13,12 +13,18 @@ public class Sample_Gyro_And_Encoder_Auto extends OpMode {
         drivetrain = new Drivetrain(hardwareMap, telemetry);
     }
     public void start() {
+        drivetrain.moveForward(0.5, 10);
+        drivetrain.turnTo(Math.toRadians(90));
+        drivetrain.moveBackward(0.7, 10);
+        drivetrain.strafeLeft(0.3, 5);
+        drivetrain.strafeRight(0.3, 5);
+        drivetrain.turnTo(Math.toRadians(-90));
     }
 
     @Override
     public void loop() {
-        telemetry.addData("Target IMU Angle: ", 180);
-        telemetry.addData("Current IMU Angle", drivetrain.getHeading());
-        drivetrain.moveForward(0.5, 10);
+        telemetry.addLine("Finished Moving!");
+        telemetry.update();
+        stop();
     }
 }
