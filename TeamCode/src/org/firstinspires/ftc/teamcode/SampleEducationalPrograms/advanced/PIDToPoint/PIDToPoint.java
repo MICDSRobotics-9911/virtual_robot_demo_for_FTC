@@ -12,6 +12,8 @@ import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUti
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.Drivetrain;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.PIDController;
 
+import java.util.ArrayList;
+
 @Autonomous(name="PIDToPoint", group="advanced")
 public class PIDToPoint extends LinearOpMode {
     public enum State {
@@ -29,6 +31,8 @@ public class PIDToPoint extends LinearOpMode {
     private double xError;
     private double yError;
     private double turnError;
+    private ArrayList<Pose2d> path;
+    private int currentPoint;
 
     /**
      * OpModes must override the abstract runOpMode() method.
@@ -41,23 +45,33 @@ public class PIDToPoint extends LinearOpMode {
         while (opModeIsActive() && !isStopRequested()) {
             Pose2d currentPose = localizer.getPoseEstimate();
             telemetry.addLine(currentPose.toString());
-            Pose2d target = new Pose2d(30, 10, Math.toRadians(270));
             switch (state) {
                 case GO_TO_POINT:
-                    calculateErrors(target);
-                    goToPoint();
-                    if (atPoint()) {
-                        state = State.FINAL_ADJUSTMENT;
-                        System.out.println(currentPose);
-                        System.out.println("TARGET");
-                        System.out.println(target);
+                    if (currentPoint < path.size()) {
+                        goToPoint(path.get(currentPoint));
+                        if (atPoint() && currentPoint == path.size() - 1) {
+                            state = State.FINAL_ADJUSTMENT;
+                            System.out.println("xError: " + xError);
+                            System.out.println("yError: " + yError);
+                            System.out.println("Heading Error: " + turnError);
+                        } else if (atPoint()){
+                            currentPoint++;
+                        }
+                    } else {
+                        state = State.BRAKE;
                     }
                     break;
                 case FINAL_ADJUSTMENT:
-                    calculateErrors(target);
+                    calculateErrors(path.get(currentPoint));
                     finalAdjustment();
-                    if (atPoint()) {
+                    if (atPoint() && currentPoint >= path.size()) {
                         state = State.BRAKE;
+                        System.out.println("xError: " + xError);
+                        System.out.println("yError: " + yError);
+                        System.out.println("Heading Error: " + turnError);
+                    } else if (atPoint()) {
+                        state = State.GO_TO_POINT;
+                        currentPoint++;
                     }
                     break;
                 case BRAKE:
@@ -65,6 +79,10 @@ public class PIDToPoint extends LinearOpMode {
                     state = State.WAIT_AT_POINT;
                     break;
                 case WAIT_AT_POINT:
+                    if (!atPointThresholds(1.5, 1.5, 5)) {
+                        resetIntegrals();
+                        state = State.GO_TO_POINT;
+                    }
                     break;
                 case DRIVE:
                     break;
@@ -75,6 +93,7 @@ public class PIDToPoint extends LinearOpMode {
             telemetry.addData("yError: ", yError);
             telemetry.addData("headingError: ", turnError);
             telemetry.addData("Current State: ", state);
+            telemetry.addData("Current Point: ", (currentPoint < path.size()) ? currentPoint: "No more points");
             telemetry.update();
             localizer.update();
         }
@@ -84,6 +103,12 @@ public class PIDToPoint extends LinearOpMode {
         drive = new Drivetrain(hardwareMap, telemetry);
         localizer = new DriveEncoderLocalizer(drive.frontLeft, drive.frontRight, drive.backLeft, drive.backRight, drive.imu);
         state = State.GO_TO_POINT;
+        path = new ArrayList<>();
+        currentPoint = 0;
+        Pose2d point1 = new Pose2d(30, 10, Math.toRadians(270));
+        Pose2d point2 = new Pose2d(30, 20, Math.toRadians(270));
+        path.add(point1);
+        path.add(point2);
     }
 
 
@@ -114,6 +139,9 @@ public class PIDToPoint extends LinearOpMode {
         applyKinematics(movementXPower * movementSpeed, movementYPower * movementSpeed, movementTurn * movementSpeed);
     }
 
+
+    // These PIDS should be more aggressive than the final pids
+
     public static PIDController xPID = new PIDController(0.04,0.0,0.003);
     public static PIDController yPID = new PIDController(0.125,0.0,0.175);
     public static PIDController turnPID = new PIDController(0.25,0.0,0.01);
@@ -123,7 +151,8 @@ public class PIDToPoint extends LinearOpMode {
     public static double turnThreshold = 3.0;
 
     // PID implementation of it
-    public void goToPoint() {
+    public void goToPoint(Pose2d target) {
+        calculateErrors(target);
         Pose2d currentPose = localizer.getPoseEstimate();
         turnError = angleWrap(turnError);
 
@@ -137,7 +166,6 @@ public class PIDToPoint extends LinearOpMode {
         double y_rotated = forward * Math.sin(-currentPose.getHeading()) + strafe * Math.cos(-currentPose.getHeading());
 
         double turn = Math.abs(turnError) > Math.toRadians(turnThreshold) / 2 ? -turnPID.update(turnError) : 0;
-
 
         applyKinematics(forward, strafe, turn);
     }
@@ -165,6 +193,7 @@ public class PIDToPoint extends LinearOpMode {
         telemetry.addData("FR: ", rightFront);
         telemetry.addData("BL: ", leftBack);
         telemetry.addData("BR: ", rightBack);
+
         drive.frontLeft.setPower(leftFront);
         drive.frontRight.setPower(rightFront);
         drive.backLeft.setPower(leftBack);
@@ -175,11 +204,13 @@ public class PIDToPoint extends LinearOpMode {
     public static PIDController finalYPID = new PIDController(0.1, 0.0,0.0);
     public static PIDController finalTurnPID = new PIDController(0.01, 0.0,0.0);
 
-    public static double finalXThreshold = 0.5;
-    public static double finalYThreshold = 0.5;
-    public static double finalTurnThreshold = 2.5;
+    public static double finalXThreshold = 0.25;
+    public static double finalYThreshold = 0.25;
+    public static double finalTurnThreshold = 2.0;
 
     public void finalAdjustment() {
+
+        turnError = angleWrap(turnError);
         double forward = Math.abs(xError) > finalXThreshold / 2 ? finalXPID.update(xError) : 0;
         double strafe = Math.abs(yError) > finalYThreshold / 2 ? -finalYPID.update(yError) : 0;
         double turn = Math.abs(turnError) > Math.toRadians(finalTurnThreshold) / 2 ? -finalTurnPID.update(turnError) : 0;
@@ -199,6 +230,19 @@ public class PIDToPoint extends LinearOpMode {
             return Math.abs(xError) < finalXThreshold && Math.abs(yError) < finalYThreshold && Math.abs(turnError) < Math.toRadians(finalTurnThreshold);
         }
         return Math.abs(xError) < xThreshold && Math.abs(yError) < yThreshold && Math.abs(turnError) < Math.toRadians(turnThreshold);
+    }
+
+    public boolean atPointThresholds (double xThresh, double yThresh, double headingThresh) {
+        return Math.abs(xError) < xThresh && Math.abs(yError) < yThresh && Math.abs(turnError) < Math.toRadians(headingThresh);
+    }
+
+    public void resetIntegrals() {
+        xPID.resetIntegral();
+        yPID.resetIntegral();
+        turnPID.resetIntegral();
+        finalXPID.resetIntegral();
+        finalYPID.resetIntegral();
+        finalTurnPID.resetIntegral();
     }
 
 }

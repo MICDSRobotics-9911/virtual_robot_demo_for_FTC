@@ -56,8 +56,11 @@ public class PIDController {
 
         lastError = error;
         counter++;
-
         return output;
+    }
+
+    public void resetIntegral() {
+        integralSum = 0;
     }
 
 
