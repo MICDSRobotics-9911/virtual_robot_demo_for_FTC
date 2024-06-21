@@ -8,7 +8,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.MotorEncoder;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Pose2d;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Derivatives;
-
+import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.RobotConstants;
 
 
 import java.util.ArrayList;
@@ -20,9 +20,9 @@ public class DriveEncoderLocalizer {
 
     private final double LONGITUDINAL_MULTIPLIER = 1.0;
     private final double LATERAL_MULTIPLIER = 1.0;
-    private final double WHEEL_RADIUS = 1.88976; // inches
-    private final double GEARBOX_RATIO = 1;
-    private final int TICKS_PER_REV = 1120; // from motor spec sheet
+    private final double WHEEL_RADIUS = RobotConstants.WHEEL_RADIUS; // inches
+    private final double GEARBOX_RATIO = RobotConstants.GEAR_RATIO;
+    private final int TICKS_PER_REV = RobotConstants.TICKS_PER_REV; // from motor spec sheet
     private final IMU imu;
     private final ElapsedTime time;
 
@@ -39,6 +39,7 @@ public class DriveEncoderLocalizer {
 
     private double headingOffset = 0;
     private Pose2d currentPoseEstimate = new Pose2d(0, 0, 0);
+    public Pose2d expected = new Pose2d(0, 0, 0);
 
     public DriveEncoderLocalizer(DcMotorEx FL, DcMotorEx FR, DcMotorEx BL, DcMotorEx BR, IMU imu) {
         this.imu = imu;
@@ -113,7 +114,6 @@ public class DriveEncoderLocalizer {
         currentPoseEstimate.plus(new Pose2d(xDisplacement, yDisplacement, 0));
         currentPoseEstimate.setHeading(heading);
     }
-
     private double angleWrapper(double radians) {
 
         double normalizedAngle = radians % (2 * Math.PI);
@@ -125,6 +125,7 @@ public class DriveEncoderLocalizer {
         }
         return normalizedAngle;
     }
+
 
     public void reset() {
         currentPoseEstimate = new Pose2d(0, 0, 0);

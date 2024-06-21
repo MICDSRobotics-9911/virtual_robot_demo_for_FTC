@@ -5,6 +5,7 @@ import static org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.Robo
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -21,11 +22,11 @@ public class Drivetrain {
 
     private ElapsedTime timer = new ElapsedTime();
     private double lastError = 0;
-    public DcMotor frontLeft;
-    public DcMotor backLeft;
-    public DcMotor frontRight;
-    public DcMotor backRight;
-    private IMU imu;
+    public DcMotorEx frontLeft;
+    public DcMotorEx backLeft;
+    public DcMotorEx frontRight;
+    public DcMotorEx backRight;
+    public IMU imu;
     private Telemetry telemetry;
 
     public Drivetrain(HardwareMap hardwareMap, Telemetry telemetry) {
@@ -39,10 +40,10 @@ public class Drivetrain {
          * **/
 
         // Control HUb
-        backLeft = hardwareMap.dcMotor.get("back_left_motor");
-        frontLeft = hardwareMap.dcMotor.get("front_left_motor");
-        frontRight = hardwareMap.dcMotor.get("front_right_motor");
-        backRight = hardwareMap.dcMotor.get("back_right_motor");
+        backLeft = hardwareMap.get(DcMotorEx.class,"back_left_motor");
+        frontLeft = hardwareMap.get(DcMotorEx.class,"front_left_motor");
+        frontRight = hardwareMap.get(DcMotorEx.class,"front_right_motor");
+        backRight = hardwareMap.get(DcMotorEx.class,"back_right_motor");
 
 
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

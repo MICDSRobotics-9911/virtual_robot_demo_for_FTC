@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils;
 
+
+
 public class Pose2d {
 
     private double x, y, heading;
@@ -13,6 +15,12 @@ public class Pose2d {
     public Pose2d(double x, double y, double heading) {
         this.x = x;
         this.y = y;
+        this.heading = heading;
+    }
+
+    public Pose2d(Vector2D vector2d, double heading) {
+        this.x = vector2d.getX();
+        this.y = vector2d.getY();
         this.heading = heading;
     }
 
@@ -62,5 +70,10 @@ public class Pose2d {
             normalizedAngle += 2 * Math.PI;
         }
         return normalizedAngle;
+    }
+
+    @Override
+    public String toString() {
+        return "x: " + x + "\ny: " + y + "\nheading: " + heading;
     }
 }

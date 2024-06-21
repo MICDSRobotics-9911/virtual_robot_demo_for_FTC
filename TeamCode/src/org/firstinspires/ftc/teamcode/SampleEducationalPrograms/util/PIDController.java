@@ -11,7 +11,9 @@ public class PIDController {
     double integralSum = 0;
     boolean angleWrap = false;
 
-    ElapsedTime timer = new ElapsedTime();
+    long lastLoopTime = System.nanoTime();
+    int counter = 0;
+    double loopTime;
 
     /**
      * Set PID gains
@@ -34,27 +36,26 @@ public class PIDController {
 
     /**
      * calculate PID output given the reference and the current system state
-     * @param reference where we would like our system to be
-     * @param state where our system is
+     * @param error where we would like our system to be
      * @return the signal to send to our motor or other actuator
      */
-    public double update(double reference, double state) {
-        double error;
+    public double update(double error) {
+        if (counter == 0) {
+            lastLoopTime = System.nanoTime() - 10000000;
+        }
+        long currentTime = System.nanoTime();
+        loopTime = (currentTime - lastLoopTime) / 1000000000.0;
+        lastLoopTime = currentTime;
         double derivative;
         // check if we need to unwrap angle
-        if (angleWrap) {
-            error = angleWrap(reference - state);
-        } else {
-            error = reference - state;
-        }
         // forward euler integration
-        integralSum += error * timer.seconds();
-        derivative = (error - lastError) / timer.seconds();
+        integralSum += error * loopTime;
+        derivative = (error - lastError) / loopTime;
 
         double output = (error * Kp) + (integralSum * Ki) + (derivative * Kd);
 
-        timer.reset();
         lastError = error;
+        counter++;
 
         return output;
     }
