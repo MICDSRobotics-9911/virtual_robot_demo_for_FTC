@@ -100,7 +100,8 @@ public class DriveEncoderLocalizer {
     }
 
     private void updatePoseEstimate(double seconds) {
-        double heading = angleWrapper(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) + headingOffset);
+        double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) + headingOffset;
+        heading = (heading < 0) ? heading + 2 * Math.PI : heading;
 
         double longitudinalDisplacement = longitudinalVelocity * seconds + 0.5 * longitudinalAcceleration * seconds * seconds;
         double lateralDisplacement = lateralVelocity * seconds + 0.5 * lateralAcceleration * seconds * seconds;

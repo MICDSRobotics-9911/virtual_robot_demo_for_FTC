@@ -74,6 +74,6 @@ public class Pose2d {
 
     @Override
     public String toString() {
-        return "x: " + x + "\ny: " + y + "\nheading: " + heading;
+        return "x: " + x + "\ny: " + y + "\nheading: " + Math.toDegrees(heading);
     }
 }

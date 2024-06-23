@@ -65,6 +65,10 @@ public class Sample_Field_Centric_Mecanum_Drive_TeleOp extends OpMode {
         backLeftPower = (rotY - rotX + turn) / denominator;
         frontRightPower = (rotY - rotX - turn) / denominator;
         backRightPower = (rotY + rotX - turn) / denominator;
+        frontLeftPower = (rotX + rotY + turn) / denominator;
+        backLeftPower = (rotX - rotY + turn) / denominator;
+        frontRightPower = (rotX - rotY - turn) / denominator;
+        backRightPower = (rotX + rotY - turn) / denominator;
 
         /*if ((power + Math.abs(turn)) > 1) {
             frontLeftPower /= power + Math.abs(turn);
@@ -77,5 +81,7 @@ public class Sample_Field_Centric_Mecanum_Drive_TeleOp extends OpMode {
         backRight.setPower(backRightPower);
         frontLeft.setPower(frontLeftPower);
         frontRight.setPower(frontRightPower);
+        telemetry.addData("heading: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+        telemetry.update();
     }
 }

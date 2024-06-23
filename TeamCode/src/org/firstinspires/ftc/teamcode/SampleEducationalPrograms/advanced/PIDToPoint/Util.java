@@ -43,8 +43,17 @@ public class Util {
                 allPoints.add(new Point(xRoot1, yRoot1));
             }
 
-            //double xRoot2 = (-quadraticB)
-        } finally {
+            double xRoot2 = (-quadraticB - Math.sqrt(Math.pow(quadraticB, 2) - (4 * quadraticA * quadraticC))) / (2.0 * quadraticA);
+            double yRoot2 = m1 * (xRoot2 - x1) + y1;
+
+            xRoot2 += circleCenter.x;
+            yRoot2 += circleCenter.y;
+
+            if (xRoot2 > minX && xRoot2 < maxX) {
+                allPoints.add(new Point(xRoot2, yRoot2));
+            }
+
+        } catch (Exception e) {
 
         }
         return allPoints;

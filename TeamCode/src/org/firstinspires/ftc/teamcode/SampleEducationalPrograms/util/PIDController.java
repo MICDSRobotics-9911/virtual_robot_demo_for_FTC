@@ -39,7 +39,7 @@ public class PIDController {
      * @param error where we would like our system to be
      * @return the signal to send to our motor or other actuator
      */
-    public double update(double error) {
+    public double update(double error, double min, double max) {
         if (counter == 0) {
             lastLoopTime = System.nanoTime() - 10000000;
         }
@@ -56,7 +56,7 @@ public class PIDController {
 
         lastError = error;
         counter++;
-        return output;
+        return minMaxClip(output, min, max);
     }
 
     public void resetIntegral() {
@@ -72,6 +72,10 @@ public class PIDController {
             radians += 2 * Math.PI;
         }
         return radians;
+    }
+
+    public static double minMaxClip(double value, double min, double max) {
+        return Math.min(Math.max(min, value), max);
     }
 
 
