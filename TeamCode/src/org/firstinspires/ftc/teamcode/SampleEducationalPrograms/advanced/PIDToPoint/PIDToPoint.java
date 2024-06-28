@@ -18,7 +18,7 @@ import java.util.Objects;
 
 @Autonomous(name="PIDToPoint", group="advanced")
 public class PIDToPoint extends LinearOpMode {
-    public enum State {
+    private enum State {
         GO_TO_POINT,
         DRIVE,
         FINAL_ADJUSTMENT,
@@ -36,6 +36,7 @@ public class PIDToPoint extends LinearOpMode {
     private ArrayList<Pose2d> path;
     private int currentPoint;
     private State lastState;
+    private PurePursuitPath purePursuitPath;
 
     /**
      * OpModes must override the abstract runOpMode() method.
@@ -89,7 +90,6 @@ public class PIDToPoint extends LinearOpMode {
                     if (gamepad1.x) {
                         drive.imu.resetYaw();
                     }
-                    //drive(gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x);
                     applyKinematics(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
                     break;
                 case IDLE:
@@ -127,6 +127,7 @@ public class PIDToPoint extends LinearOpMode {
         path.add(point1);
         path.add(point2);
         path.add(point3);
+        purePursuitPath = new PurePursuitPath(path);
     }
 
 
