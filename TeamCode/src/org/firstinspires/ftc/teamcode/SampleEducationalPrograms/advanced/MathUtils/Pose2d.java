@@ -1,20 +1,18 @@
 package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils;
 
 
+import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.PIDToPoint.Point;
 
-public class Pose2d {
+public class Pose2d extends Point {
 
-    private double x, y, heading;
+    private double heading;
 
     public Pose2d() {
-        this.x = 0;
-        this.y = 0;
-        this.heading = 0;
+        this(0, 0, 0);
     }
 
     public Pose2d(double x, double y, double heading) {
-        this.x = x;
-        this.y = y;
+        super(x, y);
         this.heading = heading;
     }
 
@@ -22,6 +20,10 @@ public class Pose2d {
         this.x = vector2d.getX();
         this.y = vector2d.getY();
         this.heading = heading;
+    }
+
+    public Pose2d(Point point, double heading) {
+        this(point.x, point.y, heading);
     }
 
     public double getX() {
