@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.StaticField;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.DriveEncoderLocalizer;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Pose2d;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Vector2D;
@@ -37,6 +38,7 @@ public class PIDToPoint extends LinearOpMode {
     private int currentPoint;
     private State lastState;
     private PurePursuitPath purePursuitPath;
+    private double angleZeroValue;
 
     /**
      * OpModes must override the abstract runOpMode() method.
@@ -51,24 +53,18 @@ public class PIDToPoint extends LinearOpMode {
             telemetry.addLine(currentPose.toString());
             switch (state) {
                 case GO_TO_POINT:
-                    if (currentPoint < path.size()) {
-                        goToPoint(path.get(currentPoint));
-                        if (atPoint() && currentPoint == path.size() - 1) {
-                            state = State.FINAL_ADJUSTMENT;
-                            System.out.println("xError: " + xError);
-                            System.out.println("yError: " + yError);
-                            System.out.println("Heading Error: " + turnError);
-                        } else if (atPoint()){
-                            currentPoint++;
-                            resetIntegrals();
-                        }
+                    if (!purePursuitPath.isFinished()) {
+                        goToPoint(purePursuitPath.update(currentPose));
                     } else {
-                        state = State.BRAKE;
+                        currentPoint = path.size() - 1;
+                        state = State.FINAL_ADJUSTMENT;
+                        System.out.println("xError: " + xError);
+                        System.out.println("yError: " + yError);
+                        System.out.println("Heading Error: " + turnError);
                     }
                     break;
                 case FINAL_ADJUSTMENT:
-                    calculateErrors(path.get(currentPoint));
-                    finalAdjustment();
+                    goToPoint(path.get(currentPoint));
                     if (atPoint()) {
                         state = State.BRAKE;
                         System.out.println("xError: " + xError);
@@ -85,12 +81,11 @@ public class PIDToPoint extends LinearOpMode {
                         resetIntegrals();
                         state = State.GO_TO_POINT;
                     }
+                    StaticField.autonHeading = currentPose.getHeading();
                     break;
                 case DRIVE:
-                    if (gamepad1.x) {
-                        drive.imu.resetYaw();
-                    }
-                    applyKinematics(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+                    angleZeroValue = currentPose.getHeading();
+                    applyKinematics(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
                     break;
                 case IDLE:
                     break;
@@ -119,6 +114,7 @@ public class PIDToPoint extends LinearOpMode {
         state = State.GO_TO_POINT;
         path = new ArrayList<>();
         currentPoint = 0;
+        angleZeroValue = 0;
         Pose2d turn = new Pose2d(0, 0, Math.toRadians(20));
         Pose2d point1 = new Pose2d(30, 10, Math.toRadians(-45));
         Pose2d point2 = new Pose2d(20, -35, Math.toRadians(-180));
@@ -175,19 +171,22 @@ public class PIDToPoint extends LinearOpMode {
         turnError = angleWrap(turnError);
 
         double forward = Math.abs(xError) > xThreshold / 2 ? xPID.update(xError, -maxPower, maxPower) : 0;
-        double strafe = Math.abs(yError) > yThreshold / 2 ? -yPID.update(yError, -maxPower, maxPower) : 0;
+        double strafe = Math.abs(yError) > yThreshold / 2 ? yPID.update(yError, -maxPower, maxPower) : 0;
 
         double turn = Math.abs(turnError) > Math.toRadians(turnThreshold) / 2 ? -turnPID.update(turnError, -maxPower, maxPower) : 0;
         applyKinematics(forward, strafe, turn);
     }
 
     public void applyKinematics(double x, double y, double turn) {
-        double rotX = x;
-        double rotY = y;
+        y *= -1;
         Pose2d currentPose = localizer.getPoseEstimate();
         double botHeading = currentPose.getHeading();
-        rotX = x * Math.cos(botHeading) - y * Math.sin(botHeading);
-        rotY = x * Math.sin(botHeading) + y * Math.cos(botHeading);
+        double rotX = x * Math.cos(botHeading) - y * Math.sin(botHeading);
+        double rotY = x * Math.sin(botHeading) + y * Math.cos(botHeading);
+        if (state == State.DRIVE) {
+            rotX = x;
+            rotY = y;
+        }
 
 
         // Denominator is the largest motor power (absolute value) or 1
@@ -205,6 +204,8 @@ public class PIDToPoint extends LinearOpMode {
     }
 
 
+
+    // These PIDS need to be less aggreessive but these constants are not aggressive enough(it moves too slowly)
     public static PIDController finalXPID = new PIDController(0.035, 0.0,0.0);
     public static PIDController finalYPID = new PIDController(0.1, 0.0,0.0);
     public static PIDController finalTurnPID = new PIDController(0.01, 0.0,0.0);
@@ -250,27 +251,6 @@ public class PIDToPoint extends LinearOpMode {
         finalXPID.resetIntegral();
         finalYPID.resetIntegral();
         finalTurnPID.resetIntegral();
-    }
-
-    public void drive(double x, double y, double turn) {
-        double backLeftPower, frontLeftPower, frontRightPower, backRightPower;
-        double power, theta, botHeading;
-        botHeading = drive.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-
-
-        double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
-        double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
-        rotX *= 1.1;
-        double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(turn), 1);
-
-        frontLeftPower = (rotY + rotX + turn) / denominator;
-        backLeftPower = (rotY - rotX + turn) / denominator;
-        frontRightPower = (rotY - rotX - turn) / denominator;
-        backRightPower = (rotY + rotX - turn) / denominator;
-        drive.backLeft.setPower(backLeftPower);
-        drive.backRight.setPower(backRightPower);
-        drive.frontLeft.setPower(frontLeftPower);
-        drive.frontRight.setPower(frontRightPower);
     }
 
 }

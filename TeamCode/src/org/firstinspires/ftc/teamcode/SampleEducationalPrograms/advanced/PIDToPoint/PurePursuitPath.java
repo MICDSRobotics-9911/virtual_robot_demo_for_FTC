@@ -11,6 +11,7 @@ public class PurePursuitPath {
     private LinkedList<Waypoint> waypoints = new LinkedList<>();
     private int targetIndex = 1;
     private boolean finished;
+    public static final double radius = 10;
 
     public PurePursuitPath(Waypoint... ws) {
         if (ws.length < 2) throw new IllegalArgumentException();
@@ -20,7 +21,7 @@ public class PurePursuitPath {
         if (ws.size() < 2) throw new IllegalArgumentException();
         ArrayList<Waypoint> ws2 = new ArrayList<>();
         for (int i = 0; i < ws.size(); i++) {
-            ws2.set(i, new Waypoint(ws.get(i), 15));
+            ws2.add(new Waypoint(ws.get(i), radius));
         }
         waypoints = new LinkedList<>(ws2);
     }
