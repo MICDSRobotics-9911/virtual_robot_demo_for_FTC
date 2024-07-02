@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.PIDToPoint;
 
+import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Point;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Pose2d;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.stream.Collectors;
 
 public class PurePursuitPath {
     private LinkedList<Waypoint> waypoints = new LinkedList<>();

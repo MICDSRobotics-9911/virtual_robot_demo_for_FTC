@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.PIDToPoint;
+package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils;
 
 
 public class Point {
@@ -69,6 +69,7 @@ public class Point {
         return Point.polar(radius(), atan()+amount);
     }
 
+    @Override
     public String toString() {
         return getX() + ", " + getY();
     }

@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.PIDToPoint;
 
-import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Pose2d;
+import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Point;
 
 public class Waypoint {
     private final Point point;

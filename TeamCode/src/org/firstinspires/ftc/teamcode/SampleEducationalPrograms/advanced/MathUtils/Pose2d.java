@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils;
 
 
-import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.PIDToPoint.Point;
-
 public class Pose2d extends Point {
 
     private double heading;

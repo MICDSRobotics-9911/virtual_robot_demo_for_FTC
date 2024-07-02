@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.PIDToPoint;
 
-import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Pose2d;
-
-import java.util.ArrayList;
+import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Point;
 
 public class Util {
     public static Point lineCircleIntersection(Point pointA, Point pointB, Point center, double radius) {
