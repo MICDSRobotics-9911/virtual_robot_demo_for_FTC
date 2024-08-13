@@ -6,16 +6,19 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.StaticField;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.DriveEncoderLocalizer;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Pose2d;
+import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.advanced.MathUtils.Vector2D;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.Drivetrain;
 import org.firstinspires.ftc.teamcode.SampleEducationalPrograms.util.PIDController;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
-@Autonomous(name="PIDToPoint", group="advanced")
-public class PIDToPoint extends LinearOpMode {
+@Autonomous(name="PurePursuit", group="advanced")
+public class PurePursuit extends LinearOpMode {
     private enum State {
         GO_TO_POINT,
         DRIVE,
@@ -50,14 +53,23 @@ public class PIDToPoint extends LinearOpMode {
             telemetry.addLine(currentPose.toString());
             switch (state) {
                 case GO_TO_POINT:
-                    if (currentPoint < path.size()) {
-                        goToPoint(path.get(currentPoint));
-                        if (atPoint()) {
-                            currentPoint++;
-                            resetIntegrals();
-                        }
+                    if (!purePursuitPath.isFinished()) {
+                        goToPoint(purePursuitPath.update(currentPose));
                     } else {
+                        currentPoint = path.size() - 1;
+                        state = State.FINAL_ADJUSTMENT;
+                        System.out.println("xError: " + xError);
+                        System.out.println("yError: " + yError);
+                        System.out.println("Heading Error: " + turnError);
+                    }
+                    break;
+                case FINAL_ADJUSTMENT:
+                    goToPoint(path.get(currentPoint));
+                    if (atPoint()) {
                         state = State.BRAKE;
+                        System.out.println("xError: " + xError);
+                        System.out.println("yError: " + yError);
+                        System.out.println("Heading Error: " + turnError);
                     }
                     break;
                 case BRAKE:
@@ -111,34 +123,7 @@ public class PIDToPoint extends LinearOpMode {
         path.add(point1);
         path.add(point2);
         path.add(point3);
-    }
-
-
-    // Non PID implementation of a movement to a point
-    public void goToPosition(double targetX, double targetY, double targetHeading, double movementSpeed) {
-        Pose2d currentPose = localizer.getPoseEstimate();
-        double currentX = currentPose.getX();
-        double currentY = currentPose.getY();
-        double heading = currentPose.getHeading();
-
-        double distance = Math.sqrt(Math.pow(targetX-currentX, 2) + Math.pow(targetY-currentY, 2));
-
-        double absoluteAngleToTarget = Math.atan2(targetY-currentY, targetX-currentX);
-        double relativeAngleToPoint = angleWrap(absoluteAngleToTarget - (heading - Math.toRadians(90)));
-
-        double relativeX = Math.cos(relativeAngleToPoint) * distance;
-        double relativeY = Math.sin(relativeAngleToPoint) * distance;
-
-        double movementXPower = relativeX / (Math.abs(relativeX) + Math.abs(relativeY));
-        double movementYPower = relativeY / (Math.abs(relativeX) + Math.abs(relativeY));
-
-        double relativeTurnAngle = relativeAngleToPoint - Math.toRadians(180) + targetHeading;
-
-        double movementTurn = Range.clip(relativeTurnAngle / Math.toRadians(30), -1, 1);
-        if (distance < 10) {
-            movementTurn = 0;
-        }
-        applyKinematics(movementXPower * movementSpeed, movementYPower * movementSpeed, movementTurn * movementSpeed);
+        purePursuitPath = new PurePursuitPath(path);
     }
 
 
@@ -150,6 +135,9 @@ public class PIDToPoint extends LinearOpMode {
     public static PIDController xPID = new PIDController(1, 0, 0.003);
     public static PIDController yPID = new PIDController(1, 0, 0.175);
     public static PIDController turnPID = new PIDController(1, 0, 0.01);
+
+
+
 
 
     public static double xThreshold = 0.75;
