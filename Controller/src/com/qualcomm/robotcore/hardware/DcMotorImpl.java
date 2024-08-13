@@ -125,7 +125,9 @@ public class DcMotorImpl implements DcMotor {
      * @param power the new power level of the motor, a value in the interval [-1.0, 1.0]
      */
     public synchronized void setPower(double power){
-        this.power = Math.max(-1, Math.min(1, power));
+        if (mode != RunMode.STOP_AND_RESET_ENCODER) {
+            this.power = Math.max(-1, Math.min(1, power));
+        }
     }
 
     /**
@@ -187,9 +189,13 @@ public class DcMotorImpl implements DcMotor {
      * @return change in actualPosition
      */
     public synchronized double update(double milliseconds){
-        if (mode == RunMode.STOP_AND_RESET_ENCODER) return 0.0;
+        //if (mode == RunMode.STOP_AND_RESET_ENCODER) return 0.0;
+        double effectiveInertia = inertia;
+        if (zeroPowerBehavior == ZeroPowerBehavior.BRAKE && power == 0){
+            effectiveInertia *= 0.01;
+        }
 
-        double actualSpeedChange, avgActualSpeed, tentativeActualSpeed;
+        double tentativeActualSpeedChange, avgActualSpeed, tentativeActualSpeed, actualSpeedChange;
         boolean rev = direction == Direction.FORWARD && MOTOR_TYPE.REVERSED
                 || direction == Direction.REVERSE && !MOTOR_TYPE.REVERSED;
         if (mode == RunMode.RUN_TO_POSITION){
@@ -199,18 +205,21 @@ public class DcMotorImpl implements DcMotor {
                     / MOTOR_TYPE.MAX_TICKS_PER_SECOND;
             double absPower = Math.abs(power);
             actualTargetSpeed = Math.max(-absPower, Math.min(actualTargetSpeed, absPower));
-            actualSpeedChange = (1.0 - inertia) * (actualTargetSpeed - actualSpeed);
-            avgActualSpeed = actualSpeed + actualSpeedChange / 2.0;
+            tentativeActualSpeedChange = (1.0 - effectiveInertia) * (actualTargetSpeed - actualSpeed);
+            avgActualSpeed = (actualSpeed + tentativeActualSpeedChange / 2.0)
+                    * (1.0 + systematicErrorFrac + randomErrorFrac * random.nextGaussian());
+            actualSpeedChange = 2.0 * (avgActualSpeed - actualSpeed);
             tentativeActualSpeed = actualSpeed + actualSpeedChange;
         } else {
             double actualPower = rev? -power : power;
-            actualSpeedChange = (1.0 - inertia) * (actualPower - actualSpeed);
-            avgActualSpeed = actualSpeed + actualSpeedChange / 2.0;
+            tentativeActualSpeedChange = (1.0 - effectiveInertia) * (actualPower - actualSpeed);
+            avgActualSpeed = (actualSpeed + tentativeActualSpeedChange / 2.0)
+                    * (1.0 + systematicErrorFrac + randomErrorFrac * random.nextGaussian());
+            actualSpeedChange = 2.0 * (avgActualSpeed - actualSpeed);
             tentativeActualSpeed = actualSpeed + actualSpeedChange;
         }
 
         double tentativeActualPositionChange = avgActualSpeed * MOTOR_TYPE.MAX_TICKS_PER_SECOND * milliseconds / 1000.0;
-        tentativeActualPositionChange *= (1.0 + systematicErrorFrac + randomErrorFrac * random.nextGaussian());
         double tentativeActualPosition = actualPosition + tentativeActualPositionChange;
 
         if (upperPositionLimitEnabled && tentativeActualPosition > upperActualPositionLimit){
